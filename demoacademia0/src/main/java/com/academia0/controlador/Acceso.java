@@ -5,8 +5,12 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+
+import com.academia0.modelo.Alumno;
 
 public class Acceso {
+
     // Datos de conexión a la base de datos.
     private static final String USER = "root";
     private static final String PWD = "8586";
@@ -40,7 +44,7 @@ public class Acceso {
     }
 
     // Método para mostrar los datos de todos los alumnos.
-    public static void mostrarAlumnos() {
+    public static void listarAlumnos() {
         // Consulta SQL para obtener todos los alumnos.
         String query = "SELECT * FROM alumnos";
         try (PreparedStatement instruccion = conexion.prepareStatement(query);
@@ -73,6 +77,53 @@ public class Acceso {
                 // Mostrar la cantidad de alumnos.
                 System.out.println("La cantidad de alumnos es: " + resultado.getInt(1));
             }
+        } catch (SQLException e) {
+            // Manejo de excepciones en caso de error al procesar la consulta.
+            e.printStackTrace();
+        }
+    }
+
+    public static void insertarAlumno(Alumno a) {
+        // Consulta SQL para insertar un nuevo alumno.
+        String query = "INSERT INTO alumnos (nombre, apellido, edad) VALUES (?, ?, ?)";
+        try {
+            // Crear un PreparedStatement para ejecutar la consulta SQL.
+            // Se usa Statement.RETURN_GENERATED_KEYS para poder recuperar el ID autoincrementado después de la inserción.
+            PreparedStatement instruccion = conexion.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+            // Configurar los parámetros del PreparedStatement con los datos del alumno.
+            instruccion.setString(1, a.getNombre());
+            instruccion.setString(2, a.getApellido());
+            instruccion.setInt(3, a.getEdad());
+    
+            // Ejecutar la actualización, que inserta el nuevo alumno en la base de datos.
+            instruccion.executeUpdate();
+    
+            // Recuperar las claves generadas por la inserción (en este caso, el ID autoincrementado).
+            ResultSet generatedKeys = instruccion.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                // Asignar el ID autoincrementado al objeto alumno.
+                a.setId(generatedKeys.getInt(1));
+            }
+    
+            // Cerrar ResultSet y PreparedStatement.
+            generatedKeys.close();
+            instruccion.close();
+        } catch (SQLException e) {
+            // Manejo de excepciones en caso de error al ejecutar la consulta o al recuperar el ID.
+            e.printStackTrace();
+        }
+    }
+    
+    
+
+    // Método para eliminar un alumno de la base de datos.
+    public static void eliminarAlumno(Alumno a){
+        String query = "DELETE FROM alumnos WHERE id = ?";
+        try (PreparedStatement instruccion = conexion.prepareStatement(query)) {
+            // Configurar el parámetro ID para el PreparedStatement.
+            instruccion.setInt(1, a.getId());
+            // Ejecutar la eliminación.
+            instruccion.executeUpdate();
         } catch (SQLException e) {
             // Manejo de excepciones en caso de error al procesar la consulta.
             e.printStackTrace();
